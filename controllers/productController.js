@@ -1,10 +1,24 @@
 const Product = require('../models/productModel');
 
-// Récupérer tous les produits
 exports.getAllProducts = async (req, res) => {
-  const products = await Product.find(); 
-  res.json(products); 
+  try {
+    const { category, sort = 'asc' } = req.query;
+    const sortOrder = sort === 'desc' ? -1 : 1;
+
+    // Tri par nom de catégorie
+    const filter = category ? { category } : {};
+    const products = await Product.find(filter).sort({ category: sortOrder });
+    
+    if (category && products.length === 0) {
+      return res.status(404).json({ message: `Aucun produit trouvé pour la catégorie "${category}"` });
+    }
+
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', error: err.message });
+  }
 };
+
 
 //  Récupérer un produit par son ID
 exports.getProductById = async (req, res) => {
@@ -18,15 +32,18 @@ exports.getProductById = async (req, res) => {
 };
 
 // 🔹 Créer un nouveau produit
+// Créer un nouveau produit
 exports.createProduct = async (req, res) => {
-  const { name, description, price, inStock } = req.body; 
+  const { name, description, price, inStock, category } = req.body;
+
   try {
-    const product = await Product.create({ name, description, price, inStock }); 
-    res.status(201).json(product); 
+    const product = await Product.create({ name, description, price, inStock, category });
+    res.status(201).json(product);
   } catch (err) {
-    res.status(400).json({ message: err.message }); 
+    res.status(400).json({ message: err.message });
   }
 };
+
 
 // Mettre à jour un produit existant
 exports.updateProduct = async (req, res) => {

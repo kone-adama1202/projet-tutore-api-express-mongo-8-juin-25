@@ -1,7 +1,9 @@
+const dotenv = require('dotenv');
 const express = require('express');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+
 const bodyParser = require('body-parser');
+const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 
 dotenv.config();
@@ -16,6 +18,7 @@ mongoose.connect(process.env.MONGO_URI, {
   .catch(err => console.error(' Erreur MongoDB:', err));
 
 // Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 
 // Serveur
