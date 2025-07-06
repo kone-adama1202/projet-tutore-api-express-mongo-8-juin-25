@@ -6,6 +6,8 @@ const bodyParser = require('body-parser');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 
+const { swaggerUi, swaggerSpec } = require('./swagger'); 
+
 dotenv.config();
 const app = express();
 app.use(bodyParser.json());
@@ -20,6 +22,7 @@ mongoose.connect(process.env.MONGO_URI, {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Serveur
 const PORT = process.env.PORT || 3000;

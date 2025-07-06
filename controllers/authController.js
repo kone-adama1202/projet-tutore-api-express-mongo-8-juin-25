@@ -17,7 +17,10 @@ exports.register = async (req, res) => {
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'Compte déjà existant' });
+      return res.status(400).json({
+        code: 400,
+        message: 'Compte déjà existant'
+      });
     }
 
     let userRole = 'user';
@@ -27,30 +30,57 @@ exports.register = async (req, res) => {
     }
 
     // Crée l'utilisateur avec le rôle défini
-    await User.create({ email, password, role: userRole });
+    const newUser = await User.create({ email, password, role: userRole });
 
-    res.status(201).json({ message: 'Compte créé avec succès' });
+    return res.status(201).json({
+      code: 201,
+      message: 'Compte créé avec succès',
+      user: {
+        id: newUser._id,
+        email: newUser.email,
+        role: newUser.role
+      }
+    });
+
   } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+    return res.status(500).json({
+      code: 500,
+      message: 'Erreur serveur',
+      error: error.message
+    });
   }
 };
 
 
 // Connexion
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
 
-  if (!user || !(await user.comparePassword(password))) {
-    return res.status(401).json({ message: 'Email ou mot de passe invalide' });
+    if (!user || !(await user.comparePassword(password))) {
+      return res.status(401).json({
+        code: 401,
+        message: 'Email ou mot de passe invalide'
+      });
+    }
+
+    const token = generateToken(user);
+    const { password: _, ...userWithoutPassword } = user.toObject();
+
+    return res.status(200).json({
+      code: 200,
+      message: 'Connexion réussie',
+      token,
+      user: userWithoutPassword
+    });
+
+  } catch (error) {
+    console.error('Erreur lors de la connexion :', error);
+    return res.status(500).json({
+      code: 500,
+      message: 'Erreur interne du serveur'
+    });
   }
-
-  const token = generateToken(user);
-// Exclure le mot de passe de la résponse
-  const { password: _, ...userWithoutPassword } = user.toObject();
-
-  res.json({
-    token,
-    user: userWithoutPassword
-  });
 };
+
